@@ -7,8 +7,8 @@ type Props = {
 const Layout = (props: Props) => {
   const { children } = props;
   return (
-    <div className='min-h-screen w-full bg-surface flex flex-col'>
-      <main className='flex-1 w-full'>{children}</main>
+    <div className='min-h-screen w-full flex flex-col'>
+      <main className='flex-1 w-full flex flex-col'>{children}</main>
     </div>
   );
 };
