@@ -1,81 +1,33 @@
 import { useEffect, useRef } from 'react';
 
-import Matter, { Bodies, Composite, Runner } from 'matter-js';
-
-import { useMatterStore } from '@/store/matterStore';
-
-export const getGameBoardWalls = () => {
-  const numSegments = 300; // Number of segments to approximate the circle
-  const radius = 410;
-  const centerX = 300;
-  const centerY = 400;
-
-  const walls = [];
-
-  for (let i = 0; i < numSegments; i++) {
-    const angle = (i / numSegments) * Math.PI * 2;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-    const body = Bodies.rectangle(x, y, 30, 600, { isStatic: true, angle: angle });
-    walls.push(body);
-  }
-
-  return [
-    ...walls,
-    Bodies.rectangle(0, 400, 20, 800, { isStatic: true }), // Left wall
-    Bodies.rectangle(600, 400, 20, 800, { isStatic: true }), // Right wall
-  ];
-};
+import { gameConfig } from '@/configs/game';
+import { useGameStore } from '@/store/gameStore';
+import { GameCore } from '@/utils/game';
 
 export const GameBoard = () => {
-  const { setEngine, setWorld, setRender } = useMatterStore();
+  const { setGameCore } = useGameStore();
 
   const sceneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const mEngine = Matter.Engine.create();
-    const mWorld = mEngine.world;
+    if (!sceneRef.current) return;
 
-    const mRender = Matter.Render.create({
-      element: sceneRef.current!,
-      engine: mEngine,
-      options: {
-        width: 600,
-        height: 800,
-        wireframes: false,
-        background: '#F8F8F8',
-      },
-    });
+    const gameCore = new GameCore(sceneRef.current);
 
-    // Run the renderer
-    Matter.Render.run(mRender);
+    setGameCore(gameCore);
 
-    const runner = Runner.create();
-    Runner.run(runner, mEngine);
-
-    setEngine(mEngine);
-    setWorld(mWorld);
-    setRender(mRender);
-
-    Composite.add(mWorld, getGameBoardWalls());
-
-    // Clean up on component unmount
     return () => {
-      Matter.Render.stop(mRender);
-      Matter.World.clear(mWorld, true);
-      Matter.Engine.clear(mEngine);
-      mRender.canvas.remove();
-      mRender.textures = {};
+      gameCore.clear();
     };
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, [sceneRef]);
 
   return (
     <div
       ref={sceneRef}
       className='mx-auto mt-4 flex justify-center items-center relative'
       style={{
-        height: '800px',
-        width: '600px',
+        height: `${gameConfig.boardHeight}px`,
+        width: `${gameConfig.boardWidth}px`,
         border: '1px solid black',
         backgroundColor: 'white',
       }}
