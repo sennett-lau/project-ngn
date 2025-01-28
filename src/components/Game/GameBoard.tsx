@@ -4,7 +4,30 @@ import Matter, { Bodies, Composite, Runner } from 'matter-js';
 
 import { useMatterStore } from '@/store/matterStore';
 
-const GameBoard = () => {
+export const getGameBoardWalls = () => {
+  const numSegments = 300; // Number of segments to approximate the circle
+  const radius = 410;
+  const centerX = 300;
+  const centerY = 400;
+
+  const walls = [];
+
+  for (let i = 0; i < numSegments; i++) {
+    const angle = (i / numSegments) * Math.PI * 2;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    const body = Bodies.rectangle(x, y, 30, 600, { isStatic: true, angle: angle });
+    walls.push(body);
+  }
+
+  return [
+    ...walls,
+    Bodies.rectangle(0, 400, 20, 800, { isStatic: true }), // Left wall
+    Bodies.rectangle(600, 400, 20, 800, { isStatic: true }), // Right wall
+  ];
+};
+
+export const GameBoard = () => {
   const { setEngine, setWorld, setRender } = useMatterStore();
 
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -30,33 +53,16 @@ const GameBoard = () => {
     const runner = Runner.create();
     Runner.run(runner, mEngine);
 
-    // Create an inverted circle wall using multiple static bodies
-    const numSegments = 300; // Number of segments to approximate the circle
-    const radius = 410;
-    const centerX = 300;
-    const centerY = 400;
-
-    for (let i = 0; i < numSegments; i++) {
-      const angle = (i / numSegments) * Math.PI * 2;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      const body = Bodies.rectangle(x, y, 30, 600, { isStatic: true, angle: angle });
-      Composite.add(mWorld, body);
-    }
-
     setEngine(mEngine);
     setWorld(mWorld);
     setRender(mRender);
 
-    Composite.add(mWorld, [
-      Bodies.rectangle(0, 400, 20, 800, { isStatic: true }), // Left wall
-      Bodies.rectangle(600, 400, 20, 800, { isStatic: true }), // Right wall
-    ]);
+    Composite.add(mWorld, getGameBoardWalls());
 
     // Clean up on component unmount
     return () => {
       Matter.Render.stop(mRender);
-      Matter.World.clear(mWorld, false);
+      Matter.World.clear(mWorld, true);
       Matter.Engine.clear(mEngine);
       mRender.canvas.remove();
       mRender.textures = {};
@@ -76,5 +82,3 @@ const GameBoard = () => {
     ></div>
   );
 };
-
-export default GameBoard;
