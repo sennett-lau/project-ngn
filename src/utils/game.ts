@@ -10,7 +10,7 @@ import Matter, {
 } from 'matter-js';
 
 import { gameConfig } from '@/configs/game';
-import { TsumsType } from '@/configs/tsum';
+import { numberOfTsumsType, tsumSpriteName, TsumsType } from '@/configs/tsum';
 import { useGameStore } from '@/store/gameStore';
 
 import { Tsum } from './tsum';
@@ -36,7 +36,7 @@ export class GameCore {
         width: gameConfig.boardWidth,
         height: gameConfig.boardHeight,
         wireframes: false,
-        background: '#F8F8F8',
+        background: '#FEFEFE',
       },
     });
 
@@ -97,8 +97,8 @@ export class GameCore {
       );
 
       if (attempts < maxAttempts) {
-        const random = Math.floor(Math.random() * 2);
-        const type: TsumsType = random === 0 ? TsumsType.nagano_bear : TsumsType.baku;
+        const random = Math.floor(Math.random() * numberOfTsumsType);
+        const type: TsumsType = Object.keys(tsumSpriteName)[random] as TsumsType;
 
         const tsum = new Tsum(this, position.x, position.y, type);
 
@@ -177,8 +177,9 @@ export class GameCore {
       isMouseDown = false;
       // Check if the number of touched circles is greater than minRewardableConnection
       if (touchedBodies.size >= gameConfig.minRewardableConnection) {
+        const numberOfRewardableTsums = touchedBodies.size;
         // Increase the score
-        this.score += touchedBodies.size * 10;
+        this.score += numberOfRewardableTsums * 10;
 
         // update gameStore
         useGameStore.getState().updateScore();
@@ -187,6 +188,8 @@ export class GameCore {
         touchedBodies.forEach((body) => {
           (body as any).remove();
         });
+
+        this.spawnTsums(numberOfRewardableTsums);
       } else {
         // Revert the texture back if not enough connections
         touchedBodies.forEach((body) => {
