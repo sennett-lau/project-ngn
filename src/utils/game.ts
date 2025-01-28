@@ -200,34 +200,14 @@ export class GameCore {
       this.connectingType = null;
     });
 
-    // Custom render function to draw lines
-    const drawLines = () => {
-      const context = this.render.context;
-      context.beginPath();
-      context.lineWidth = 2;
-      context.strokeStyle = 'blue';
-
-      // Update the touchedCenters based on the current positions of the touchedBodies
-      const updatedCenters = Array.from(touchedBodies).map((body) =>
-        Matter.Vertices.centre(body.vertices),
-      );
-
-      for (let i = 0; i < updatedCenters.length - 1; i++) {
-        const start = updatedCenters[i];
-        const end = updatedCenters[i + 1];
-        context.moveTo(start.x, start.y);
-        context.lineTo(end.x, end.y);
-      }
-
-      context.stroke();
-    };
-
     // Add a render event to draw the lines
-    Events.on(this.render, 'afterRender', drawLines);
+    Events.on(this.render, 'afterRender', () => this._drawLines(touchedBodies));
   }
 
   reset() {
     this.score = 0;
+    useGameStore.getState().updateScore();
+    this.connectingType = null;
     this.tsums.forEach((tsum) => tsum.remove());
     this.tsums = [];
     this.spawnTsums(gameConfig.numberOfTsums);
@@ -240,6 +220,27 @@ export class GameCore {
     this.render.canvas.remove();
     this.render.textures = {};
   }
+
+  _drawLines = (touchedBodies: Set<Matter.Body>) => {
+    const context = this.render.context;
+    context.beginPath();
+    context.lineWidth = 2;
+    context.strokeStyle = 'blue';
+
+    // Update the touchedCenters based on the current positions of the touchedBodies
+    const updatedCenters = Array.from(touchedBodies).map((body) =>
+      Matter.Vertices.centre(body.vertices),
+    );
+
+    for (let i = 0; i < updatedCenters.length - 1; i++) {
+      const start = updatedCenters[i];
+      const end = updatedCenters[i + 1];
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+    }
+
+    context.stroke();
+  };
 }
 
 const _isOverlapping = (x: number, y: number, bodies: Matter.Body[], radius: number) => {
